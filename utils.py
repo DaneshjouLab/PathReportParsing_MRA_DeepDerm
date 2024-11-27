@@ -173,6 +173,57 @@ def extract_clinical_impression(text):
     return impressions
 
 
+def add_microscopic_description(text, specimen_data):
+    """
+    Extract and populate the Microscopic Description column in the DataFrame.
+
+    Args:
+        text (str): The input text containing the Path Report.
+        specimen_data (pd.DataFrame): The DataFrame containing specimen details.
+
+    Returns:
+        pd.DataFrame: Updated DataFrame with Microscopic Description.
+    """
+    micro_desc_section = re.search(
+        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",  # Capture text until the next section header or end of text
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if not micro_desc_section:
+        return specimen_data
+
+    micro_desc_text = micro_desc_section.group(1).strip()
+
+    # Try to match specimen-specific identifiers and descriptions
+    micro_desc_matches = re.findall(
+        r"^([A-Z][\.\):])\s*(.*?)\s*-\s*(.+)$",  # Match identifier, location, and description
+        micro_desc_text,
+        re.IGNORECASE | re.DOTALL | re.MULTILINE,
+    )
+
+    if micro_desc_matches:
+        # Case: Multiple specimens with identifiers
+        for match in micro_desc_matches:
+            specimen_id, location, description = (
+                match[0][0],
+                match[1].strip(),
+                match[2].strip(),
+            )
+            specimen_data.loc[
+                specimen_data["Specimen Identifier"] == specimen_id,
+                "Microscopic Description",
+            ] = description
+    else:
+        # Case: No valid identifiers and apply the entire description to all specimens
+        for specimen in specimen_data["Specimen Identifier"]:
+            specimen_data.loc[
+                specimen_data["Specimen Identifier"] == specimen,
+                "Microscopic Description",
+            ] = micro_desc_text
+
+    return specimen_data
+
+
 def extract_specimen_details(text):
     """
     Extracts details (Diagnosis, Microscopic Description, Clinical Impression) for each specimen
@@ -224,43 +275,7 @@ def extract_specimen_details(text):
         ] = diagnosis_text
 
     # Extract Microscopic Description
-    micro_desc_section = re.search(
-        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",  # Capture text until the next section header or end of text
-        text,
-        re.IGNORECASE | re.DOTALL,
-    )
-    if micro_desc_section:
-        micro_desc_text = micro_desc_section.group(1).strip()
-        # print("Extracted Microscopic Description text:", micro_desc_text)
-
-        # Attempt to match specimen-specific identifiers and descriptions
-        micro_desc_matches = re.findall(
-            r"^([A-Z][\.\):])\s*(.*?)\s*-\s*(.+)$",  # Match identifier, location, and description
-            micro_desc_text,
-            re.IGNORECASE | re.DOTALL | re.MULTILINE,
-        )
-
-        if micro_desc_matches:
-            # Case: Multiple specimens with identifiers
-            print("Identifiers Found:", [match[0] for match in micro_desc_matches])
-            for match in micro_desc_matches:
-                specimen_id, location, description = (
-                    match[0][0],
-                    match[1].strip(),
-                    match[2].strip(),
-                )
-                specimen_data.loc[
-                    specimen_data["Specimen Identifier"] == specimen_id,
-                    "Microscopic Description",
-                ] = description
-        else:
-            # Case: No valid identifiers; apply the entire description to all specimens
-            # print("No valid identifiers found.")
-            for specimen in specimen_data["Specimen Identifier"]:
-                specimen_data.loc[
-                    specimen_data["Specimen Identifier"] == specimen,
-                    "Microscopic Description",
-                ] = micro_desc_text
+    specimen_data = add_microscopic_description(text, specimen_data)
 
     # Extract Clinical Impressions
     clinical_impressions = extract_clinical_impression(text)
@@ -288,14 +303,14 @@ def extract_specimen_details(text):
 
 def process_pathology_reports(df):
     """
-    Processes a DataFrame of pathology reports to extract structured details for 
+    Processes a DataFrame of pathology reports to extract structured details for
     each specimen mentioned in the reports.
 
     Args:
         df (pd.DataFrame): A DataFrame with a "Path Report Text" column.
 
     Returns:
-        pd.DataFrame: A DataFrame where each row corresponds to a specimen with 
+        pd.DataFrame: A DataFrame where each row corresponds to a specimen with
                       columns for extracted details and original data.
     """
     collected_data = pd.DataFrame()
