@@ -14,7 +14,26 @@ This repo provides a tool for automatically extracting and processing pathology 
 
 ---
 
-## Installation
+## Run in Colab
+For ease of use without local setup, you can run the Python notebook in Google Colab. Use the provided badge to access the notebook directly in your browser.
+<a target="_blank" href="https://colab.research.google.com/github/DaneshjouLab/PathReportParsing_MRA_DeepDerm/blob/main/PathReportParser.ipynb">
+  <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
+
+1. Prepare Your Input File
+    Ensure your input file is an Excel file containing the sheet named "Per Lesion".
+    Include a column titled Path Report Text containing the pathology report text to be processed.
+
+2. Run the Notebook
+    Update the input_file path to the location of your Excel file:
+    ```bash
+    input_file = "/path/to/the/excel/file"
+    ```
+
+## Run Locally
+If you prefer to run the notebook on your local machine, follow the installation and usage instructions below.
+
+### Installation
 
 1. Clone the repository:
    ```bash
@@ -27,10 +46,10 @@ This repo provides a tool for automatically extracting and processing pathology 
     pip install -r requirements.txt
     ```
 
-## Usage
+### Usage
 
 1. Prepare Your Input File
-    Ensure your input file is an Excel file containing a sheet named "Per Lesion".
+    Ensure your input file is an Excel file containing the sheet named "Per Lesion".
     Include a column titled Path Report Text containing the pathology report text to be processed.
 
 2. Run the Notebook
@@ -39,7 +58,7 @@ This repo provides a tool for automatically extracting and processing pathology 
     input_file = "/path/to/the/excel/file"
     ```
 
-3. Execute the notebook or script. If the Path Report Text column is present, the script will process the data and save the results to a new file named Processed_Pathology_Reports.xlsx.
+3. Execute the notebook or script. If the Path Report Text column is present, the script will process the data and save the results to a new file named `Processed_Pathology_Reports.xlsx`.
 
 4. Check the Output
     The processed data will be saved as an Excel file in the working directory.
