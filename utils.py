@@ -315,9 +315,6 @@ def process_pathology_reports(df):
     """
     collected_data = pd.DataFrame()
 
-    # Replace NaN values with an empty string before processing
-    df['Path Report Text'] = df['Path Report Text'].fillna('')
-
     # Process each row in the DataFrame
     for index, row in df.iterrows():
         # Extract details from the pathology report text
