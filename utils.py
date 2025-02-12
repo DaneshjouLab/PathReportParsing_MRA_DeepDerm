@@ -11,8 +11,8 @@ clinical impressions, diagnoses, and microscopic descriptions from pathology rep
 """
 
 # Import dependencies
-import pandas as pd
 import re
+import pandas as pd
 
 
 def extract_accession_and_specimens_df(text):
@@ -24,7 +24,8 @@ def extract_accession_and_specimens_df(text):
         text (str): The input text containing the path report details.
 
     Returns:
-        pd.DataFrame: A DataFrame with columns "Accession No", "Specimen Identifier", and "Specimen Description".
+        pd.DataFrame: A DataFrame with columns "Accession No", "Specimen Identifier", and
+            "Specimen Description".
     """
     # Initialize storage for data
     accession_no = None
@@ -93,13 +94,15 @@ def remove_text_after_newline(cell_text):
 def extract_clinical_impression(text):
     """
     Extracts Clinical Impression information for each specimen. If no specimen-specific
-    identifiers are found after "CLINICAL IMPRESSION:", assumes the same text applies to all specimens.
+    identifiers are found after "CLINICAL IMPRESSION:", assumes the same text applies to all
+    specimens.
 
     Args:
         text (str): The input text containing the Clinical Impression section.
 
     Returns:
-        dict: A dictionary where keys are specimen identifiers (e.g., A, B) and values are the impressions.
+        dict: A dictionary where keys are specimen identifiers (e.g., A, B) and values are the
+          impressions.
     """
     # Step 1: Extract Specimen Mapping from "SPECIMEN SUBMITTED"
     specimen_mapping = {}
@@ -112,7 +115,7 @@ def extract_clinical_impression(text):
         specimens = re.findall(
             r"([A-Z])[\.\):]?\s*(.+)", specimen_submitted_section.group(1)
         )
-        for idx, (identifier, description) in enumerate(specimens, start=1):
+        for idx, (identifier, _) in enumerate(specimens, start=1):
             specimen_mapping[str(idx)] = identifier.strip()  # Map #1, #2 to A, B, etc.
             specimen_mapping[identifier.strip()] = (
                 identifier.strip()
@@ -155,13 +158,16 @@ def extract_clinical_impression(text):
                     start_pos + len(identifier) : end_pos
                 ].strip()
 
-                # Map to corresponding specimen, cleaning up format (e.g., "A)" -> "A", "A:" -> "A", "#1-" -> "1")
+                # Map to corresponding specimen, cleaning up format
+                # (e.g., "A)" -> "A", "A:" -> "A", "#1-" -> "1")
                 clean_identifier = (
                     re.sub(r"[\)\-:#]", "", identifier).replace("Lesion ", "").strip()
                 )
                 if clean_identifier in specimen_mapping:
-                    mapped_id = specimen_mapping[clean_identifier]
-                    impressions[mapped_id] += impression_text.strip() + " "
+                    # mapped_id = specimen_mapping[clean_identifier]
+                    impressions[specimen_mapping[clean_identifier]] += (
+                        impression_text.strip() + " "
+                    )
         else:
             # No identifiers found.
             for specimen in impressions.keys():
@@ -184,8 +190,9 @@ def add_microscopic_description(text, specimen_data):
     Returns:
         pd.DataFrame: Updated DataFrame with Microscopic Description.
     """
+    # Capture text until the next section header or end of text
     micro_desc_section = re.search(
-        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",  # Capture text until the next section header or end of text
+        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",
         text,
         re.IGNORECASE | re.DOTALL,
     )
@@ -204,7 +211,7 @@ def add_microscopic_description(text, specimen_data):
     if micro_desc_matches:
         # Case: Multiple specimens with identifiers
         for match in micro_desc_matches:
-            specimen_id, location, description = (
+            specimen_id, _, description = (
                 match[0][0],
                 match[1].strip(),
                 match[2].strip(),
@@ -227,7 +234,8 @@ def add_microscopic_description(text, specimen_data):
 def extract_specimen_details(text):
     """
     Extracts details (Diagnosis, Microscopic Description, Clinical Impression) for each specimen
-    in the Path Report Text. Handles all identifiers and respects line breaks for Diagnosis and Impressions.
+    in the Path Report Text. Handles all identifiers and respects line breaks for Diagnosis and
+    Impressions.
 
     Args:
         text (str): The input text containing the Path Report.
@@ -265,7 +273,7 @@ def extract_specimen_details(text):
         re.IGNORECASE | re.DOTALL,
     )
     for match in diagnosis_matches:
-        specimen_id, location, diagnosis_text = (
+        specimen_id, _, diagnosis_text = (
             match[0],
             match[1].strip(),
             match[2].strip(),
@@ -315,10 +323,10 @@ def process_pathology_reports(df):
     """
     collected_data = pd.DataFrame()
     # Replace NaN values with an empty string before processing
-    df['Path Report Text'] = df['Path Report Text'].fillna('')
+    df["Path Report Text"] = df["Path Report Text"].fillna("")
 
     # Process each row in the DataFrame
-    for index, row in df.iterrows():
+    for _, row in df.iterrows():
         # Extract details from the pathology report text
         extracted_df = extract_specimen_details(row["Path Report Text"])
 
