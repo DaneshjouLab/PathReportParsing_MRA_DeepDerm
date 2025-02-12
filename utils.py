@@ -15,7 +15,6 @@ import re
 import pandas as pd
 
 
-
 def extract_accession_and_specimens_df(text):
     """
     Extracts the Accession Number and Specimens from the path report text in two formats
@@ -166,7 +165,9 @@ def extract_clinical_impression(text):
                 )
                 if clean_identifier in specimen_mapping:
                     # mapped_id = specimen_mapping[clean_identifier]
-                    impressions[specimen_mapping[clean_identifier]] += impression_text.strip() + " "
+                    impressions[specimen_mapping[clean_identifier]] += (
+                        impression_text.strip() + " "
+                    )
         else:
             # No identifiers found.
             for specimen in impressions.keys():
@@ -191,7 +192,7 @@ def add_microscopic_description(text, specimen_data):
     """
     # Capture text until the next section header or end of text
     micro_desc_section = re.search(
-        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",  
+        r"MICROSCOPIC DESCRIPTION:\s*(.+?)(?=\n[A-Z ]+:|$)",
         text,
         re.IGNORECASE | re.DOTALL,
     )
@@ -322,7 +323,7 @@ def process_pathology_reports(df):
     """
     collected_data = pd.DataFrame()
     # Replace NaN values with an empty string before processing
-    df['Path Report Text'] = df['Path Report Text'].fillna('')
+    df["Path Report Text"] = df["Path Report Text"].fillna("")
 
     # Process each row in the DataFrame
     for _, row in df.iterrows():
